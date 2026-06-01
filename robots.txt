@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /brand-guide/
+
+# Block all crawlers from indexing the brand guide.
+# The root login page remains crawlable but has no meaningful content to index.
