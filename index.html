@@ -273,7 +273,7 @@
     //   2. Replace the hash string below.
     // Current password: Covetrus2024!
     // ─────────────────────────────────────────────
-    const CORRECT_HASH = 'b350fb0f170db93fe5bf28f173c654928c52741c0e66a9d0315a387961457852';
+    const CORRECT_HASHES = ['b350fb0f170db93fe5bf28f173c654928c52741c0e66a9d0315a387961457852','d7ba1f53395ffce672703b83856abf01679f024ff5bf1244e6d196963a770ce6'];
     const REDIRECT_URL = './site/';   // path to your brand guide folder
     const SESSION_KEY  = 'cvt_bg_auth';
 
@@ -331,7 +331,7 @@
 
       const hash = await sha256(val);
 
-      if (hash === CORRECT_HASH) {
+      if (CORRECT_HASHES.includes(hash)) {
         sessionStorage.setItem(SESSION_KEY, 'granted');
         window.location.replace(REDIRECT_URL);
       } else {
