@@ -1,7 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
+<script>
+  (function () {
+    var SESSION_KEY = 'cvt_bg_auth';
+    var LOGIN_URL   = '../../';
+    if (sessionStorage.getItem(SESSION_KEY) !== 'granted') {
+      window.location.replace(LOGIN_URL);
+    }
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Covetrus Brand Checker</title>
@@ -234,29 +242,87 @@ document.getElementById('copyInput').addEventListener('input', function() {
    RULES ENGINE
    ══════════════════════════════════════ */
 
-const trademarkRules = [
-  { pattern: /\bCovetrus\b(?![\s\u00AE®])/g, correct: 'Covetrus®', note: 'Covetrus requires ® on first mention in external materials.', category: 'trademark' },
-  { pattern: /\bVetSuite\b(?![\s\u00AE®])/g, correct: 'VetSuite®', note: 'VetSuite requires ® on first mention.', category: 'trademark' },
-  { pattern: /\bPulse\b(?![\s\u00AE®])/g, correct: 'Pulse®', note: 'Pulse requires ® on first mention.', category: 'trademark', exclude: /Covetrus®?\s+Pulse/i },
-  { pattern: /\bvRxPro\b(?![\s\u00AE®])/g, correct: 'vRxPro®', note: 'vRxPro requires ® on first mention.', category: 'trademark' },
-  { pattern: /\bGreatPetCare\b(?![\s\u00AE®])/g, correct: 'GreatPetCare®', note: 'GreatPetCare requires ® on first mention.', category: 'trademark' },
-  { pattern: /\bOti-Pack\b(?![\s\u00AE®])/g, correct: 'Oti-Pack®', note: 'Oti-Pack requires ® on first mention.', category: 'trademark' },
-  { pattern: /\bMiniTab\b(?![\s\u2122™])/g, correct: 'MiniTab™', note: 'MiniTab requires ™ on first mention.', category: 'trademark' },
-  { pattern: /\bMiniMelt\b(?![\s\u2122™])/g, correct: 'MiniMelt™', note: 'MiniMelt requires ™ on first mention.', category: 'trademark' },
-  { pattern: /\bFlexTab\b(?![\s\u2122™])/g, correct: 'FlexTab™', note: 'FlexTab requires ™ on first mention.', category: 'trademark' },
-];
+const trademarkRules = [];
+const spellingRules = [];
 
-const spellingRules = [
-  { pattern: /\bVet\s+Suite\b/gi, correct: 'VetSuite', note: 'VetSuite is one word, camelCase.', category: 'spelling' },
-  { pattern: /\bvetsuite\b/g, correct: 'VetSuite', note: 'VetSuite uses camelCase capitalization.', category: 'spelling' },
-  { pattern: /\bVrxpro\b/g, correct: 'vRxPro', note: 'vRxPro uses specific capitalization (lowercase v, uppercase R, P).', category: 'spelling' },
-  { pattern: /\bVRXPRO\b/g, correct: 'vRxPro', note: 'vRxPro uses specific capitalization (lowercase v, uppercase R, P).', category: 'spelling' },
-  { pattern: /\bVRxPro\b/g, correct: 'vRxPro', note: 'vRxPro starts with a lowercase v.', category: 'spelling' },
-  { pattern: /\bGreat\s+Pet\s+Care\b/gi, correct: 'GreatPetCare', note: 'GreatPetCare is one word, camelCase.', category: 'spelling' },
-  { pattern: /\bgreatpetcare\b/g, correct: 'GreatPetCare', note: 'GreatPetCare uses camelCase capitalization.', category: 'spelling' },
-  { pattern: /\bCoVetrus\b/gi, correct: 'Covetrus', note: 'Covetrus uses standard capitalization (no capital V).', category: 'spelling' },
-  { pattern: /\bcovetrus\b/g, correct: 'Covetrus', note: 'Covetrus should be capitalized.', category: 'spelling' },
-  { pattern: /\bProp\s+Brands\b/gi, correct: 'ProPbrands', note: 'Check the correct capitalization of this sub-brand name.', category: 'spelling' },
+/* ── Combined Brand Name Rules ──
+   These catch ANY variation of a brand name that isn't perfectly written
+   with the correct mark. One rule per brand, handles spelling + trademark. */
+
+const brandNameRules = [
+  {
+    // Catches: covetrus, Covetrus, COVETRUS, CoVetrus — anything without ®
+    pattern: /\b[Cc][Oo]?[Vv][Ee][Tt][Rr][Uu][Ss]\b(?!\s*®)/gi,
+    correct: 'Covetrus®',
+    exactSpelling: 'Covetrus',
+    note: 'Use "Covetrus®" — correct capitalization with ® on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: vetsuite, VetSuite, Vetsuite, vet suite, Vet Suite, VETSUITE — without ®
+    pattern: /\b[Vv][Ee][Tt]\s*[Ss][Uu][Ii][Tt][Ee]\b(?!\s*®)/gi,
+    correct: 'VetSuite®',
+    exactSpelling: 'VetSuite',
+    note: 'Use "VetSuite®" — one word, camelCase, with ® on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: pulse, Pulse, PULSE — without ®
+    pattern: /\b[Pp][Uu][Ll][Ss][Ee]\b(?!\s*®)/gi,
+    correct: 'Pulse®',
+    exactSpelling: 'Pulse',
+    note: 'Use "Pulse®" with ® on first mention.',
+    category: 'trademark',
+    exclude: /\b(covetrus®?\s+pulse|pulse\s+rate|pulse\s+ox)/i
+  },
+  {
+    // Catches: vrxpro, VRxPro, vRxPro, Vrxpro, VRXPRO — without ®
+    pattern: /\bv\s*[Rr]\s*[Xx]\s*[Pp][Rr][Oo]\b(?!\s*®)/gi,
+    correct: 'vRxPro®',
+    exactSpelling: 'vRxPro',
+    note: 'Use "vRxPro®" — lowercase v, specific capitalization, with ® on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: greatpetcare, GreatPetCare, Great Pet Care, great pet care — without ®
+    pattern: /\b[Gg][Rr][Ee][Aa][Tt]\s*[Pp][Ee][Tt]\s*[Cc][Aa][Rr][Ee]\b(?!\s*®)/gi,
+    correct: 'GreatPetCare®',
+    exactSpelling: 'GreatPetCare',
+    note: 'Use "GreatPetCare®" — one word, camelCase, with ® on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: oti-pack, Oti-Pack, OTI-PACK — without ®
+    pattern: /\b[Oo][Tt][Ii]-?\s*[Pp][Aa][Cc][Kk]\b(?!\s*®)/gi,
+    correct: 'Oti-Pack®',
+    exactSpelling: 'Oti-Pack',
+    note: 'Use "Oti-Pack®" with ® on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: minitab, MiniTab, MINITAB — without ™
+    pattern: /\b[Mm][Ii][Nn][Ii]\s*[Tt][Aa][Bb]\b(?!\s*[™\u2122])/gi,
+    correct: 'MiniTab™',
+    exactSpelling: 'MiniTab',
+    note: 'Use "MiniTab™" with ™ on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: minimelt, MiniMelt, MINIMELT — without ™
+    pattern: /\b[Mm][Ii][Nn][Ii]\s*[Mm][Ee][Ll][Tt]\b(?!\s*[™\u2122])/gi,
+    correct: 'MiniMelt™',
+    exactSpelling: 'MiniMelt',
+    note: 'Use "MiniMelt™" with ™ on first mention.',
+    category: 'trademark'
+  },
+  {
+    // Catches: flextab, FlexTab, FLEXTAB — without ™
+    pattern: /\b[Ff][Ll][Ee][Xx]\s*[Tt][Aa][Bb]\b(?!\s*[™\u2122])/gi,
+    correct: 'FlexTab™',
+    exactSpelling: 'FlexTab',
+    note: 'Use "FlexTab™" with ™ on first mention.',
+    category: 'trademark'
+  },
 ];
 
 const b2bLanguageRules = [
@@ -361,8 +427,7 @@ function runCheck() {
   }
 
   // Always apply
-  applyRules(spellingRules, 'high');
-  applyRules(trademarkRules, 'medium');
+  applyRules(brandNameRules, 'high');
   applyRules(toneRules);
   applyRules(cushionRules);
 
