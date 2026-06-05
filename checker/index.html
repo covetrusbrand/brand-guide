@@ -4,7 +4,7 @@
 <script>
   (function () {
     var SESSION_KEY = 'cvt_bg_auth';
-    var LOGIN_URL   = '../../';
+    var LOGIN_URL   = '../';
     if (sessionStorage.getItem(SESSION_KEY) !== 'granted') {
       window.location.replace(LOGIN_URL);
     }
